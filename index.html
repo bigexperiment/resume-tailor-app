@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Tailor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8f9fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .app {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 2rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .settings-icon {
+            cursor: pointer;
+            font-size: 1.25rem;
+            color: #4a5568;
+            transition: transform 0.2s ease;
+        }
+
+        .settings-icon:hover {
+            transform: rotate(45deg);
+        }
+
+        .settings-panel {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 999;
+            backdrop-filter: blur(4px);
+        }
+
+        .form-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .form-container:hover {
+            transform: translateY(-2px);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        textarea, input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease;
+        }
+
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        button {
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #3182ce;
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background-color: #cbd5e0;
+            cursor: not-allowed;
+        }
+
+        #output {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background-color: white;
+            white-space: pre-wrap;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 1rem 0;
+            animation: pulse 2s infinite;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto;
+            border: 3px solid #e2e8f0;
+            border-radius: 50%;
+            border-top-color: #4299e1;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.6;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        textarea#resume {
+            height: 4.8em; /* Approximately 3 lines */
+            resize: none; /* Prevents manual resizing */
+            line-height: 1.6;
+            overflow-y: auto;
+        }
+
+        .prompt-selector {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: #2d3748;
+        }
+
+        .prompt-list {
+            margin-bottom: 1.5rem;
+        }
+
+        .prompt-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .prompt-item textarea {
+            margin-top: 0.5rem;
+        }
+
+        .prompt-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .delete-btn {
+            background-color: #f56565;
+        }
+
+        .delete-btn:hover {
+            background-color: #e53e3e;
+        }
+
+        .prompts-container {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .prompts-list-section {
+            flex: 1;
+        }
+
+        .prompt-editor-section {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .prompt-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .prompt-item:hover {
+            background: #edf2f7;
+        }
+
+        .prompt-item.active {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+
+        .prompt-item-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .prompt-count {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .editor-title {
+            margin: 0 0 1rem 0;
+            font-size: 1.1rem;
+            color: #2d3748;
+        }
+
+        .delete-btn {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+            background-color: #f56565;
+        }
+
+        .prompt-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .output-container {
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            opacity: 1;
+            transform: none;
+        }
+
+        .copy-alert {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2d3748;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .copy-alert.show {
+            opacity: 1;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="overlay" id="overlay"></div>
+    <div class="settings-panel" id="settings-panel">
+        <h2>Settings</h2>
+        <div class="form-group">
+            <label for="apiKey">OpenAI API Key:</label>
+            <input type="password" id="apiKey" placeholder="Enter your OpenAI API key">
+        </div>
+        
+        <div class="form-group">
+            <h3>Prompts</h3>
+            <div class="prompts-container">
+                <div class="prompts-list-section">
+                    <div class="prompt-count">
+                        <span id="promptCount">0</span>/10 prompts
+                    </div>
+                    <div id="promptList" class="prompt-list"></div>
+                    <button onclick="createNewPrompt()" id="newPromptBtn">+ New Prompt</button>
+                </div>
+                
+                <div class="prompt-editor-section" id="promptEditor">
+                    <h4 class="editor-title">Edit Prompt</h4>
+                    <div class="form-group">
+                        <label for="promptName">Name:</label>
+                        <input type="text" id="promptName" placeholder="Enter prompt name">
+                    </div>
+                    <div class="form-group">
+                        <label for="promptContent">Prompt:</label>
+                        <textarea id="promptContent" rows="6" placeholder="Enter prompt content"></textarea>
+                    </div>
+                    <div class="prompt-actions">
+                        <button onclick="savePromptChanges()" id="savePromptBtn">Save Changes</button>
+                        <button onclick="deleteCurrentPrompt()" id="deletePromptBtn" class="delete-btn">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="saveSettings()">Save</button>
+        <button onclick="closeSettings()" style="background-color: #e2e8f0; color: #4a5568;">Cancel</button>
+    </div>
+
+    <div class="app">
+        <div class="logo">
+            Resume Tailor
+            <div class="settings-icon" onclick="openSettings()">⚙️</div>
+        </div>
+
+        <div class="form-container fade-in">
+            <div class="form-group">
+                <label for="promptSelector">Select Prompt:</label>
+                <select id="promptSelector" class="prompt-selector"></select>
+            </div>
+            <div class="form-group">
+                <label for="resume">Your Resume:</label>
+                <textarea id="resume" rows="10" placeholder="Paste your resume here..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="keywords">Key Skills:</label>
+                <input type="text" id="keywords" placeholder="Enter skills to highlight">
+            </div>
+
+            <button onclick="aiEnhance()" id="aiEnhanceBtn" disabled>Generate</button>
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>AI is working its magic...</p>
+            </div>
+
+            <div class="output-container">
+                <div id="output"></div>
+                <button class="copy-btn" onclick="copyOutput()" title="Copy to clipboard">
+                    📋
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="copyAlert" class="copy-alert">Copied to clipboard!</div>
+
+    <script>
+        const DEFAULT_PROMPT = {
+            name: "Resume Bullet Points",
+            prompt: "Given my resume details below, generate Based on my resume details below, generate exactly 2 or 3 bullet points that highlight my experience with the given skillset. The output should contain only the bullet points—no introduction, explanation, or additional text. The bullet points should be concise, achievement-oriented, and demonstrate my contributions, problem-solving, and impact without copying from the job description. Here is my resume content"
+        };
+
+        function loadPrompts() {
+            let prompts = JSON.parse(localStorage.getItem('prompts') || '[]');
+            
+            // Always ensure the first prompt is the current default prompt
+            if (prompts.length === 0 || prompts[0].name !== DEFAULT_PROMPT.name) {
+                prompts = [DEFAULT_PROMPT, ...prompts.filter(p => p.name !== DEFAULT_PROMPT.name)];
+                localStorage.setItem('prompts', JSON.stringify(prompts));
+            }
+            
+            // Update the default prompt content if it's different
+            if (prompts[0].prompt !== DEFAULT_PROMPT.prompt) {
+                prompts[0] = DEFAULT_PROMPT;
+                localStorage.setItem('prompts', JSON.stringify(prompts));
+            }
+            
+            return prompts;
+        }
+
+        let currentPromptIndex = null;
+
+        function updatePromptList() {
+            const promptList = document.getElementById('promptList');
+            const promptSelector = document.getElementById('promptSelector');
+            const prompts = loadPrompts();
+            const lastUsedPrompt = localStorage.getItem('last_used_prompt') || '0';
+            
+            // Update prompt count
+            document.getElementById('promptCount').textContent = prompts.length;
+            
+            // Update settings panel prompt list
+            promptList.innerHTML = prompts.map((p, i) => `
+                <div class="prompt-item ${i === currentPromptIndex ? 'active' : ''}" 
+                     onclick="selectPrompt(${i})">
+                    <span class="prompt-item-name">${p.name}</span>
+                </div>
+            `).join('');
+
+            // Update main form prompt selector and maintain selection
+            promptSelector.innerHTML = prompts.map((p, i) => 
+                `<option value="${i}">${p.name}</option>`
+            ).join('');
+            promptSelector.value = lastUsedPrompt;
+
+            // Update editor state
+            updateEditorState();
+        }
+
+        function selectPrompt(index) {
+            currentPromptIndex = index;
+            const prompts = loadPrompts();
+            const prompt = prompts[index];
+            
+            document.getElementById('promptName').value = prompt.name;
+            document.getElementById('promptContent').value = prompt.prompt;
+            
+            // Update UI state
+            updateEditorState();
+            updatePromptList();
+        }
+
+        function updateEditorState() {
+            const isDefault = currentPromptIndex === 0;
+            const promptEditor = document.getElementById('promptEditor');
+            const deleteBtn = document.getElementById('deletePromptBtn');
+            const nameInput = document.getElementById('promptName');
+            
+            // Disable name editing and deletion for default prompt
+            nameInput.disabled = isDefault;
+            deleteBtn.style.display = isDefault ? 'none' : 'block';
+            
+            // Show/hide editor based on selection
+            promptEditor.style.opacity = currentPromptIndex !== null ? '1' : '0.5';
+        }
+
+        function createNewPrompt() {
+            const prompts = loadPrompts();
+            if (prompts.length >= 10) {
+                alert('Maximum 10 prompts allowed. Please delete some to create new ones.');
+                return;
+            }
+
+            currentPromptIndex = prompts.length;
+            document.getElementById('promptName').value = '';
+            document.getElementById('promptContent').value = '';
+            updateEditorState();
+            updatePromptList();
+        }
+
+        function savePromptChanges() {
+            const name = document.getElementById('promptName').value.trim();
+            const content = document.getElementById('promptContent').value.trim();
+            
+            if (!name || !content) {
+                alert('Please fill in both name and content');
+                return;
+            }
+
+            let prompts = loadPrompts();
+            
+            if (currentPromptIndex === prompts.length) {
+                // Adding new prompt
+                prompts.push({ name, prompt: content });
+            } else {
+                // Updating existing prompt
+                prompts[currentPromptIndex] = { name, prompt: content };
+            }
+            
+            localStorage.setItem('prompts', JSON.stringify(prompts));
+            updatePromptList();
+        }
+
+        function deleteCurrentPrompt() {
+            if (currentPromptIndex === 0) return; // Prevent default prompt deletion
+            
+            if (confirm('Are you sure you want to delete this prompt?')) {
+                let prompts = loadPrompts();
+                prompts.splice(currentPromptIndex, 1);
+                localStorage.setItem('prompts', JSON.stringify(prompts));
+                
+                currentPromptIndex = null;
+                document.getElementById('promptName').value = '';
+                document.getElementById('promptContent').value = '';
+                
+                updatePromptList();
+            }
+        }
+
+        // Modify the existing openSettings function
+        function openSettings() {
+            document.getElementById('settings-panel').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+            
+            const savedApiKey = localStorage.getItem('openai_api_key');
+            if (savedApiKey) {
+                document.getElementById('apiKey').value = savedApiKey;
+            }
+            
+            currentPromptIndex = 0; // Select default prompt
+            updatePromptList();
+            selectPrompt(0);
+        }
+
+        // Modify the existing aiEnhance function
+        async function aiEnhance() {
+            const selectedPromptIndex = document.getElementById('promptSelector').value;
+            // Save the last used prompt index
+            localStorage.setItem('last_used_prompt', selectedPromptIndex);
+            
+            const resume = document.getElementById('resume').value;
+            const keywords = document.getElementById('keywords').value;
+            const apiKey = localStorage.getItem('openai_api_key');
+            const prompts = loadPrompts();
+            const selectedPrompt = prompts[selectedPromptIndex].prompt;
+
+            if (!resume || !keywords || !apiKey) {
+                alert('Please fill in all fields and ensure API key is set');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            const outputDiv = document.getElementById('output');
+            
+
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-4o-mini",
+                        messages: [ {
+                            role: "user",
+                            content: `${selectedPrompt}\n\n${keywords}\n\n${resume}`
+                        }],
+                        temperature: 0.7,
+                        stream: true
+                    })
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let formattedContent = '';
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value);
+
+                    while (true) {
+                        const newlineIndex = buffer.indexOf('\n');
+                        if (newlineIndex === -1) break;
+
+                        const line = buffer.slice(0, newlineIndex);
+                        buffer = buffer.slice(newlineIndex + 1);
+
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6);
+                            if (data === '[DONE]') continue;
+
+                            try {
+                                const json = JSON.parse(data);
+                                const content = json.choices[0]?.delta?.content;
+                                if (content) {
+                                    formattedContent += content;
+                                    // Only format as bullets if content appears to be a list
+                                    const lines = formattedContent.split('\n').filter(line => line.trim());
+                                    const isListContent = lines.every(line => 
+                                        line.trim().startsWith('-') || 
+                                        line.trim().startsWith('•') || 
+                                        /^\d+\./.test(line.trim())
+                                    );
+
+                                    if (isListContent) {
+                                        // Format as bullets
+                                        const bulletPoints = lines
+                                            .map(line => `• ${line.trim().replace(/^[-•\d.]\s*/, '')}`)
+                                            .join('\n');
+                                        outputDiv.textContent = bulletPoints;
+                                    } else {
+                                        // Keep original formatting
+                                        outputDiv.textContent = formattedContent;
+                                    }
+                                    
+                                    // Auto scroll to bottom
+                                    outputDiv.scrollTop = outputDiv.scrollHeight;
+                                }
+                            } catch (e) {
+                                console.error('Error parsing JSON:', e);
+                            }
+                        }
+                    }
+                }
+
+                // Show copy button when content starts streaming
+                const copyBtn = document.querySelector('.copy-btn');
+                copyBtn.style.display = 'block';
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Modify the existing window.onload function
+        window.onload = function() {
+            const savedApiKey = localStorage.getItem('openai_api_key');
+            const savedResume = localStorage.getItem('saved_resume');
+            const savedKeywords = localStorage.getItem('saved_keywords');
+            const lastUsedPrompt = localStorage.getItem('last_used_prompt');
+            
+            if (savedApiKey) {
+                document.getElementById('aiEnhanceBtn').disabled = false;
+            }
+            
+            if (savedResume) {
+                document.getElementById('resume').value = savedResume;
+            }
+            
+            if (savedKeywords) {
+                document.getElementById('keywords').value = savedKeywords;
+            }
+
+            updatePromptList();
+
+            // Set the last used prompt in the selector
+            if (lastUsedPrompt) {
+                document.getElementById('promptSelector').value = lastUsedPrompt;
+            }
+        }
+
+        // Save form data
+        function saveFormData() {
+            const resume = document.getElementById('resume').value;
+            const keywords = document.getElementById('keywords').value;
+            
+            localStorage.setItem('saved_resume', resume);
+            localStorage.setItem('saved_keywords', keywords);
+        }
+
+        // Add event listeners to save data on input
+        document.getElementById('resume').addEventListener('input', saveFormData);
+        document.getElementById('keywords').addEventListener('input', saveFormData);
+
+        function closeSettings() {
+            document.getElementById('settings-panel').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        function saveSettings() {
+            const apiKey = document.getElementById('apiKey').value;
+            
+            if (apiKey) {
+                localStorage.setItem('openai_api_key', apiKey);
+                document.getElementById('aiEnhanceBtn').disabled = false;
+            } else {
+                localStorage.removeItem('openai_api_key');
+                document.getElementById('aiEnhanceBtn').disabled = true;
+            }
+
+            closeSettings();
+        }
+
+        async function copyOutput() {
+            const output = document.getElementById('output').textContent;
+            try {
+                await navigator.clipboard.writeText(output);
+                const alert = document.getElementById('copyAlert');
+                alert.classList.add('show');
+                setTimeout(() => alert.classList.remove('show'), 2000);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+            }
+        }
+    </script>
+  </body>
+</html>
